@@ -149,14 +149,14 @@
       g.append("g").call(d3.axisLeft(y).ticks(3));
       const line = d3.line().x(d=>x(d[0])).y(d=>y(d[1]));
       const xVals = d3.range(params.xDomain[0], params.xDomain[1], params.step);
-      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p1)*params.scale1])).attr("fill","none").attr("stroke",color1).attr("stroke-width",2).attr("d",line);
-      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p2)*params.scale2])).attr("fill","none").attr("stroke",color3).attr("stroke-width",2).attr("stroke-dasharray","4,4").attr("d",line);
-      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p3)*params.scale3])).attr("fill","none").attr("stroke",color2).attr("stroke-width",3).attr("d",line);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, ...params.p1)*params.scale1])).attr("fill","none").attr("stroke",color1).attr("stroke-width",2).attr("d",line);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, ...params.p2)*params.scale2])).attr("fill","none").attr("stroke",color3).attr("stroke-width",2).attr("stroke-dasharray","4,4").attr("d",line);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, ...params.p3)*params.scale3])).attr("fill","none").attr("stroke",color2).attr("stroke-width",3).attr("d",line);
     }
-    draw("#betaViz", "#ef4444", "#f59e0b", "#10b981", betaPDF, {xDomain:[0,1], yMax:4, step:0.02, p1:{a:2,b:2}, p2:{a:2,b:8}, p3:{a:7,b:7}, scale1:3, scale2:3, scale3:3});
-    draw("#gammaViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,10], yMax:1.5, step:0.1, p1:{a:2,b:1}, p2:{a:2,b:3}, p3:{a:7,b:3}, scale1:1, scale2:1, scale3:1});
-    draw("#normalViz", "#ef4444", "#f59e0b", "#10b981", normalPDF, {xDomain:[-4,4], yMax:1.2, step:0.1, p1:{mu:0,sigma:2}, p2:{mu:0,sigma:1.5}, p3:{mu:1.5,sigma:0.8}, scale1:1, scale2:1, scale3:1});
-    draw("#expViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,8], yMax:1, step:0.1, p1:{a:2,b:1}, p2:{a:2,b:2}, p3:{a:7,b:2}, scale1:1, scale2:1, scale3:1});
+    draw("#betaViz", "#ef4444", "#f59e0b", "#10b981", betaPDF, {xDomain:[0,1], yMax:4, step:0.02, p1:[2,2], p2:[2,8], p3:[7,7], scale1:3, scale2:3, scale3:3});
+    draw("#gammaViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,10], yMax:1.5, step:0.1, p1:[2,1], p2:[2,3], p3:[7,3], scale1:1, scale2:1, scale3:1});
+    draw("#normalViz", "#ef4444", "#f59e0b", "#10b981", normalPDF, {xDomain:[-4,4], yMax:1.2, step:0.1, p1:[0,2], p2:[0,1.5], p3:[1.5,0.8], scale1:1, scale2:1, scale3:1});
+    draw("#expViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,8], yMax:1, step:0.1, p1:[2,1], p2:[2,2], p3:[7,2], scale1:1, scale2:1, scale3:1});
   </script>
 </body>
 </html>
