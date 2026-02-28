@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MathViz - Bayesian Statistics</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 3rem 0;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      border-radius: 24px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    h1 {
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.25rem;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid transparent;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border-color: var(--primary);
+    }
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .card-number {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      font-size: 0.875rem;
+      margin-right: 0.5rem;
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--text-muted);
+    }
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 MathViz</h1>
+      <p class="subtitle">Bayesian Statistics — Interactive Visualizations</p>
+      <span class="badge">7 Concepts • Interactive</span>
+    </header>
+
+    <div class="grid">
+      <a href="bayes-rule/" class="card">
+        <div class="card-icon">🎯</div>
+        <h2><span class="card-number">1</span>Bayes Rule</h2>
+        <p>Understand prior × likelihood = posterior visually. Interactive sliders show real-time updates.</p>
+      </a>
+
+      <a href="conjugacy/" class="card">
+        <div class="card-icon">🔗</div>
+        <h2><span class="card-number">2</span>Conjugacy</h2>
+        <p>Why posterior stays in same family. Four conjugate pairs explained side-by-side.</p>
+      </a>
+
+      <a href="bernoulli/" class="card">
+        <div class="card-icon">🪙</div>
+        <h2><span class="card-number">3</span>Bernoulli/Binomial</h2>
+        <p>Flip coins and watch the Beta posterior update. The classic example.</p>
+      </a>
+
+      <a href="poisson/" class="card">
+        <div class="card-icon">📈</div>
+        <h2><span class="card-number">4</span>Poisson + Gamma</h2>
+        <p>Model event counts. Arrivals, clicks, defects — any rate-based process.</p>
+      </a>
+
+      <a href="exponential/" class="card">
+        <div class="card-icon">⏱️</div>
+        <h2><span class="card-number">5</span>Exponential + Gamma</h2>
+        <p>Survival analysis and wait times. How long until the next event?</p>
+      </a>
+
+      <a href="normal/" class="card">
+        <div class="card-icon">🔔</div>
+        <h2><span class="card-number">6</span>Normal + Normal</h2>
+        <p>Infer the mean with known variance. The Gaussian case.</p>
+      </a>
+
+      <a href="quick-reference/" class="card">
+        <div class="card-icon">📋</div>
+        <h2><span class="card-number">7</span>Quick Reference</h2>
+        <p>Cheat sheet for all conjugate pairs. The magic formula and when NOT to use conjugacy.</p>
+      </a>
+    </div>
+
+    <footer>
+      <p>Built with the MathViz Pipeline � automatic visualization from PDF</p>
+    </footer>
+  </div>
+</body>
+</html>

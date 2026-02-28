@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conjugacy Visualizer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --prior: #ef4444;
+      --data: #10b981;
+      --posterior: #f59e0b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      padding: 2rem;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: var(--text-muted); margin-top: 0.5rem; }
+    .concepts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+    }
+    .concept-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .concept-card h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .family { color: var(--primary); font-weight: 600; }
+    .formula { font-family: 'Courier New', monospace; background: var(--background); padding: 0.75rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; }
+    .formula-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0; }
+    .arrow { color: var(--text-muted); }
+    .viz svg { width: 100%; height: 150px; }
+    .legend { display: flex; gap: 1.5rem; justify-content: center; margin: 1.5rem 0; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .info-box {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+      border-left: 4px solid var(--primary);
+    }
+    .info-box h3 { margin-bottom: 0.5rem; }
+    .info-box p { color: var(--text-muted); line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔗 Conjugacy in Action</h1>
+      <p class="subtitle">Same family, updated parameters — closed-form updates!</p>
+    </header>
+
+    <div class="legend">
+      <div class="legend-item"><div class="dot" style="background:var(--prior)"></div>Prior</div>
+      <div class="legend-item"><div class="dot" style="background:var(--data)"></div>Data added</div>
+      <div class="legend-item"><div class="dot" style="background:var(--posterior)"></div>Posterior</div>
+    </div>
+
+    <div class="concepts-grid">
+      <!-- Beta-Binomial -->
+      <div class="concept-card">
+        <h2>🪙 Bernoulli/Binomial + <span class="family">Beta</span></h2>
+        <div class="formula">
+          <div class="formula-row">Prior: Beta(α, β)</div>
+          <div class="formula-row"><span class="arrow">↓</span> Add data: k successes in n trials</div>
+          <div class="formula-row">Posterior: Beta(α+k, β+n-k)</div>
+        </div>
+        <div class="viz" id="betaViz"></div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">Coins, medical trials, A/B tests</p>
+      </div>
+
+      <!-- Gamma-Poisson -->
+      <div class="concept-card">
+        <h2>📊 Poisson + <span class="family">Gamma</span></h2>
+        <div class="formula">
+          <div class="formula-row">Prior: Gamma(α, β)</div>
+          <div class="formula-row"><span class="arrow">↓</span> Add data: observed count y</div>
+          <div class="formula-row">Posterior: Gamma(α+y, β+1)</div>
+        </div>
+        <div class="viz" id="gammaViz"></div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">Events per time, customer arrivals</p>
+      </div>
+
+      <!-- Normal-Normal -->
+      <div class="concept-card">
+        <h2>🔔 Normal + <span class="family">Normal</span></h2>
+        <div class="formula">
+          <div class="formula-row">Prior: N(μ₀, σ₀²)</div>
+          <div class="formula-row"><span class="arrow">↓</span> Add data: sample mean ȳ from n obs</div>
+          <div class="formula-row">Posterior: N(μₙ, σₙ²)</div>
+        </div>
+        <div class="viz" id="normalViz"></div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">Measurement errors, test scores</p>
+      </div>
+
+      <!-- Exponential-Gamma -->
+      <div class="concept-card">
+        <h2>⏱️ Exponential + <span class="family">Gamma</span></h2>
+        <div class="formula">
+          <div class="formula-row">Prior: Gamma(α, β)</div>
+          <div class="formula-row"><span class="arrow">↓</span> Add data: n survival times</div>
+          <div class="formula-row">Posterior: Gamma(α+n, β+Σtᵢ)</div>
+        </div>
+        <div class="viz" id="expViz"></div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">Reliability, wait times</p>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h3>💡 Why Conjugacy Matters</h3>
+      <p>Without conjugacy, you'd need <strong>approximation methods</strong> (MCMC, variational inference, Laplace). With conjugacy, you get <strong>closed-form</strong> updates — just add numbers! The posterior parameters = prior pseudo-counts + observed counts. Simple, fast, interpretable.</p>
+    </div>
+  </div>
+
+  <script>
+    function betaPDF(x, a, b) {
+      if (x <= 0 || x >= 1) return 0;
+      return Math.pow(x, a-1) * Math.pow(1-x, b-1);
+    }
+    function gammaPDF(x, a, b) {
+      if (x <= 0) return 0;
+      return Math.pow(b, a) * Math.pow(x, a-1) * Math.exp(-b*x);
+    }
+    function normalPDF(x, mu, sigma) {
+      return Math.exp(-0.5 * Math.pow((x-mu)/sigma, 2));
+    }
+    function draw(selector, color1, color2, color3, pdfFn, params) {
+      const w = 380, h = 140, m = {top:10,right:10,bottom:25,left:30};
+      const svg = d3.select(selector).append("svg").attr("viewBox", `0 0 ${w} ${h}`);
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+      const x = d3.scaleLinear().domain(params.xDomain).range([0, w-m.left-m.right]);
+      const y = d3.scaleLinear().domain([0, params.yMax]).range([h-m.top-m.bottom, 0]);
+      g.append("g").attr("transform", `translate(0,${h-m.top-m.bottom})`).call(d3.axisBottom(x).ticks(5));
+      g.append("g").call(d3.axisLeft(y).ticks(3));
+      const line = d3.line().x(d=>x(d[0])).y(d=>y(d[1]));
+      const xVals = d3.range(params.xDomain[0], params.xDomain[1], params.step);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p1)*params.scale1])).attr("fill","none").attr("stroke",color1).attr("stroke-width",2).attr("d",line);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p2)*params.scale2])).attr("fill","none").attr("stroke",color3).attr("stroke-width",2).attr("stroke-dasharray","4,4").attr("d",line);
+      g.append("path").datum(xVals.map(v=>[v, pdfFn(v, params.p3)*params.scale3])).attr("fill","none").attr("stroke",color2).attr("stroke-width",3).attr("d",line);
+    }
+    draw("#betaViz", "#ef4444", "#f59e0b", "#10b981", betaPDF, {xDomain:[0,1], yMax:4, step:0.02, p1:{a:2,b:2}, p2:{a:2,b:8}, p3:{a:7,b:7}, scale1:3, scale2:3, scale3:3});
+    draw("#gammaViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,10], yMax:1.5, step:0.1, p1:{a:2,b:1}, p2:{a:2,b:3}, p3:{a:7,b:3}, scale1:1, scale2:1, scale3:1});
+    draw("#normalViz", "#ef4444", "#f59e0b", "#10b981", normalPDF, {xDomain:[-4,4], yMax:1.2, step:0.1, p1:{mu:0,sigma:2}, p2:{mu:0,sigma:1.5}, p3:{mu:1.5,sigma:0.8}, scale1:1, scale2:1, scale3:1});
+    draw("#expViz", "#ef4444", "#f59e0b", "#10b981", gammaPDF, {xDomain:[0,8], yMax:1, step:0.1, p1:{a:2,b:1}, p2:{a:2,b:2}, p3:{a:7,b:2}, scale1:1, scale2:1, scale3:1});
+  </script>
+</body>
+</html>

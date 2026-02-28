@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bayes Rule Visualizer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --secondary: #8b5cf6;
+      --prior-color: #ef4444;
+      --likelihood-color: #10b981;
+      --posterior-color: #f59e0b;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .formula {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+    }
+
+    .formula span { color: var(--prior-color); }
+    .formula .like { color: var(--likelihood-color); }
+    .formula .post { color: var(--posterior-color); }
+
+    .visualizations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .panel h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel.prior h2 { color: var(--prior-color); }
+    .panel.likelihood h2 { color: var(--likelihood-color); }
+    .panel.posterior h2 { color: var(--posterior-color); }
+
+    .panel svg { width: 100%; height: 200px; }
+
+    .controls {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .slider-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .slider-item label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .slider-item input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--background);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .slider-item input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider-value {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 0.25rem;
+      color: var(--primary);
+    }
+
+    .explanation {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+      border-left: 4px solid var(--primary);
+    }
+
+    .explanation h3 { margin-bottom: 1rem; }
+
+    .explanation p {
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .axis line, .axis path { stroke: var(--text-muted); }
+    .axis text { fill: var(--text-muted); font-size: 10px; }
+    .grid line { stroke: var(--surface); stroke-opacity: 0.5; }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.75rem; }
+      .formula { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Bayes Rule Visualizer</h1>
+      <div class="formula">
+        <span>prior</span> × <span class="like">likelihood</span> = <span class="post">posterior</span>
+      </div>
+    </header>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--prior-color)"></div>
+        <span>Prior (your belief before data)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--likelihood-color)"></div>
+        <span>Likelihood (what data tells you)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: var(--posterior-color)"></div>
+        <span>Posterior (updated belief)</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="slider-group">
+        <div class="slider-item">
+          <label>Prior Mean (μ₀)</label>
+          <input type="range" id="priorMean" min="0" max="1" step="0.01" value="0.5">
+          <div class="slider-value" id="priorMeanVal">0.5</div>
+        </div>
+        <div class="slider-item">
+          <label>Prior Strength (α₀ + β₀)</label>
+          <input type="range" id="priorStrength" min="2" max="50" step="1" value="10">
+          <div class="slider-value" id="priorStrengthVal">10</div>
+        </div>
+        <div class="slider-item">
+          <label>Data: Heads (n₁)</label>
+          <input type="range" id="heads" min="0" max="50" step="1" value="7">
+          <div class="slider-value" id="headsVal">7</div>
+        </div>
+        <div class="slider-item">
+          <label>Data: Trials (n)</label>
+          <input type="range" id="trials" min="1" max="100" step="1" value="10">
+          <div class="slider-value" id="trialsVal">10</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="visualizations">
+      <div class="panel prior">
+        <h2>📊 Prior Distribution</h2>
+        <svg id="priorChart"></svg>
+      </div>
+      <div class="panel likelihood">
+        <h2>📈 Likelihood Function</h2>
+        <svg id="likelihoodChart"></svg>
+      </div>
+      <div class="panel posterior">
+        <h2>🎯 Posterior Distribution</h2>
+        <svg id="posteriorChart"></svg>
+      </div>
+    </div>
+
+    <div class="explanation">
+      <h3>What am I looking at?</h3>
+      <p id="explanation">
+        The <strong>prior</strong> (red) represents your belief before seeing data. 
+        The <strong>likelihood</strong> (green) shows how likely different values of θ are, given your data.
+        The <strong>posterior</strong> (orange) is the updated belief — mathematically: prior × likelihood.
+        <br><br>
+        Notice how the posterior is a "compromise" between your prior belief and what the data suggests!
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let state = {
+      priorMean: 0.5,
+      priorStrength: 10,
+      heads: 7,
+      trials: 10
+    };
+
+    // Beta distribution PDF
+    function betaPDF(x, alpha, beta) {
+      if (x <= 0 || x >= 1) return 0;
+      // Using log to avoid overflow
+      const logBeta = (a, b) => {
+        const max = Math.max(a, b);
+        let sum = 0;
+        for (let i = 1; i < Math.min(a, b); i++) sum += Math.log(i / (max + i));
+        return sum;
+      };
+      const logVal = (alpha - 1) * Math.log(x) + (beta - 1) * Math.log(1 - x) 
+                    - logBeta(alpha, beta);
+      return Math.exp(logVal);
+    }
+
+    // Binomial likelihood
+    function binomialLikelihood(theta, n, k) {
+      // P(k heads | n trials, theta) ∝ theta^k * (1-theta)^(n-k)
+      if (theta <= 0 || theta >= 1) return 0;
+      return Math.pow(theta, k) * Math.pow(1 - theta, n - k);
+    }
+
+    // Chart dimensions
+    const margin = { top: 10, right: 20, bottom: 30, left: 40 };
+    const width = 320 - margin.left - margin.right;
+    const height = 180 - margin.top - margin.bottom;
+
+    function createChart(selector, color) {
+      const svg = d3.select(selector)
+        .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear().domain([0, 1]).range([0, width]);
+      const y = d3.scaleLinear().domain([0, 5]).range([height, 0]);
+
+      // Grid
+      svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).ticks(5).tickSize(-height).tickFormat(""));
+
+      svg.append("g")
+        .attr("class", "grid")
+        .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(""));
+
+      // Axes
+      svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).ticks(5));
+
+      svg.append("g")
+        .attr("class", "axis")
+        .call(d3.axisLeft(y).ticks(5));
+
+      // Line
+      svg.append("path")
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", color)
+        .attr("stroke-width", 3);
+
+      return { svg, x, y };
+    }
+
+    const priorChart = createChart("#priorChart", "#ef4444");
+    const likelihoodChart = createChart("#likelihoodChart", "#10b981");
+    const posteriorChart = createChart("#posteriorChart", "#f59e0b");
+
+    function updateCharts() {
+      const { priorMean, priorStrength, heads, trials } = state;
+      
+      // Prior: Beta(α, β) where mean = α/(α+β)
+      const priorAlpha = priorMean * priorStrength;
+      const priorBeta = (1 - priorMean) * priorStrength;
+
+      // Posterior: Prior + Data
+      const postAlpha = priorAlpha + heads;
+      const postBeta = priorBeta + (trials - heads);
+
+      // Generate data
+      const xVals = d3.range(0.01, 1, 0.02);
+      
+      const priorData = xVals.map(x => ({ x, y: betaPDF(x, priorAlpha, priorBeta) }));
+      const likelihoodData = xVals.map(x => ({ x, y: binomialLikelihood(x, trials, heads) * 3 }));
+      const posteriorData = xVals.map(x => ({ x, y: betaPDF(x, postAlpha, postBeta) }));
+
+      // Update scales
+      const maxY = Math.max(
+        d3.max(priorData, d => d.y),
+        d3.max(likelihoodData, d => d.y),
+        d3.max(posteriorData, d => d.y)
+      ) * 1.1;
+
+      priorChart.y.domain([0, maxY]);
+      likelihoodChart.y.domain([0, maxY]);
+      posteriorChart.y.domain([0, maxY]);
+
+      // Update lines
+      const line = d3.line()
+        .x(d => priorChart.x(d.x))
+        .y(d => priorChart.y(d.y));
+
+      priorChart.svg.select(".line").datum(priorData).attr("d", line);
+      likelihoodChart.svg.select(".line").datum(likelihoodData).attr("d", line);
+      posteriorChart.svg.select(".line").datum(posteriorData).attr("d", line);
+
+      // Update axes
+      priorChart.svg.selectAll(".axis").filter((d, i) => i === 1).call(d3.axisLeft(priorChart.y).ticks(5));
+    }
+
+    // Event listeners
+    document.querySelectorAll("input[type='range']").forEach(input => {
+      input.addEventListener("input", (e) => {
+        const id = e.target.id;
+        const val = parseFloat(e.target.value);
+        state[id] = val;
+        document.getElementById(id + "Val").textContent = val;
+        updateCharts();
+      });
+    });
+
+    // Initial render
+    updateCharts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bernoulli/Binomial + Beta</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      padding: 2rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; background: linear-gradient(135deg, var(--primary), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: var(--text-muted); margin-top: 0.5rem; }
+    .coin-sim {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .coin {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #92400e;
+      margin: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .coin.flip { animation: flip 0.5s ease-out; }
+    @keyframes flip { 0% { transform: rotateY(0); } 50% { transform: rotateY(180deg); } 100% { transform: rotateY(360deg); } }
+    .coin.heads { background: linear-gradient(135deg, #34d399, #10b981); color: #064e3b; }
+    .coin.tails { background: linear-gradient(135deg, #f87171, #ef4444); color: #7f1d1d; }
+    .buttons { margin: 1rem 0; }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.25rem;
+    }
+    button:hover { opacity: 0.9; }
+    button.secondary { background: var(--surface); border: 1px solid var(--primary); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .stat-box {
+      background: var(--surface);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .stat-value { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+    .stat-label { color: var(--text-muted); font-size: 0.875rem; }
+    .chart { background: var(--surface); border-radius: 16px; padding: 1.5rem; }
+    .chart svg { width: 100%; height: 250px; }
+    .controls { background: var(--surface); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .slider-row { display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; }
+    .slider-row label { width: 180px; }
+    .slider-row input { flex: 1; }
+    .slider-row span { width: 60px; text-align: right; color: var(--primary); font-weight: bold; }
+    input[type="range"] { height: 8px; -webkit-appearance: none; background: var(--background); border-radius: 4px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+    .info { background: var(--surface); border-radius: 12px; padding: 1.5rem; border-left: 4px solid var(--primary); margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🪙 Bernoulli/Binomial + Beta</h1>
+      <p class="subtitle">Coin flips, medical trials, A/B testing — the classic!</p>
+    </header>
+
+    <div class="coin-sim">
+      <div class="coin" id="coin">?</div>
+      <div class="buttons">
+        <button onclick="flipCoin()">Flip Once</button>
+        <button onclick="flipMany()">Flip 10x</button>
+        <button onclick="flipMany(50)">Flip 50x</button>
+        <button class="secondary" onclick="reset()">Reset</button>
+      </div>
+      <div class="stats">
+        <div class="stat-box"><div class="stat-value" id="heads">0</div><div class="stat-label">Heads</div></div>
+        <div class="stat-box"><div class="stat-value" id="tails">0</div><div class="stat-label">Tails</div></div>
+        <div class="stat-box"><div class="stat-value" id="total">0</div><div class="stat-label">Total Flips</div></div>
+        <div class="stat-box"><div class="stat-value" id="prop">-</div><div class="stat-label">Heads %</div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <h3>Prior Settings</h3>
+      <div class="slider-row">
+        <label>Prior α (pseudo-heads)</label>
+        <input type="range" id="priorAlpha" min="1" max="20" value="2">
+        <span id="priorAlphaVal">2</span>
+      </div>
+      <div class="slider-row">
+        <label>Prior β (pseudo-tails)</label>
+        <input type="range" id="priorBeta" min="1" max="20" value="2">
+        <span id="priorBetaVal">2</span>
+      </div>
+    </div>
+
+    <div class="chart">
+      <h3>Posterior Distribution</h3>
+      <svg id="chart"></svg>
+    </div>
+
+    <div class="info">
+      <strong>How it works:</strong> Posterior = Beta(α + heads, β + tails). The prior acts as "pseudo-observations" — starting with Beta(2,2) is like having seen 2 heads and 2 tails before you started!
+    </div>
+  </div>
+
+  <script>
+    let state = { heads: 0, tails: 0, priorAlpha: 2, priorBeta: 2 };
+    
+    function flipCoin() {
+      const coin = document.getElementById('coin');
+      coin.classList.add('flip');
+      setTimeout(() => {
+        const isHeads = Math.random() < 0.5;
+        coin.textContent = isHeads ? 'H' : 'T';
+        coin.className = 'coin ' + (isHeads ? 'heads' : 'tails');
+        if (isHeads) state.heads++; else state.tails++;
+        updateUI();
+      }, 250);
+    }
+    
+    function flipMany(n = 10) {
+      for (let i = 0; i < n; i++) {
+        if (Math.random() < 0.5) state.heads++; else state.tails++;
+      }
+      updateUI();
+    }
+    
+    function reset() { state.heads = 0; state.tails = 0; document.getElementById('coin').textContent = '?'; document.getElementById('coin').className = 'coin'; updateUI(); }
+    
+    function updateUI() {
+      const total = state.heads + state.tails;
+      document.getElementById('heads').textContent = state.heads;
+      document.getElementById('tails').textContent = state.tails;
+      document.getElementById('total').textContent = total;
+      document.getElementById('prop').textContent = total > 0 ? (state.heads / total * 100).toFixed(1) + '%' : '-';
+      document.getElementById('priorAlphaVal').textContent = state.priorAlpha;
+      document.getElementById('priorBetaVal').textContent = state.priorBeta;
+      drawChart();
+    }
+    
+    function betaPDF(x, a, b) { if (x <= 0 || x >= 1) return 0; return Math.pow(x, a-1) * Math.pow(1-x, b-1); }
+    
+    function drawChart() {
+      const svg = d3.select('#chart');
+      svg.selectAll('*').remove();
+      const w = 800, h = 250, m = {top:20, right:30, bottom:40, left:50};
+      const g = svg.attr('viewBox', `0 0 ${w} ${h}`).append('g').attr('transform', `translate(${m.left},${m.top})`);
+      const postAlpha = state.priorAlpha + state.heads;
+      const postBeta = state.priorBeta + state.tails;
+      const x = d3.scaleLinear().domain([0,1]).range([0, w-m.left-m.right]);
+      const xVals = d3.range(0.01, 1, 0.01);
+      const yMax = d3.max(xVals.map(v => betaPDF(v, postAlpha, postBeta))) * 1.2;
+      const y = d3.scaleLinear().domain([0, yMax]).range([h-m.top-m.bottom, 0]);
+      g.append('g').attr('transform', `translate(0,${h-m.top-m.bottom})`).call(d3.axisBottom(x));
+      g.append('g').call(d3.axisLeft(y));
+      const line = d3.line().x(d => x(d[0])).y(d => y(d[1]));
+      g.append('path').datum(xVals.map(v => [v, betaPDF(v, postAlpha, postBeta)])).attr('fill', 'none').attr('stroke', '#10b981').attr('stroke-width', 3).attr('d', line);
+      // Mark MAP
+      const map = (postAlpha - 1) / (postAlpha + postBeta - 2) || 0.5;
+      g.append('circle').attr('cx', x(map)).attr('cy', y(betaPDF(map, postAlpha, postBeta))).attr('r', 6).attr('fill', '#f59e0b');
+      g.append('text').attr('x', x(map)).attr('y', y(betaPDF(map, postAlpha, postBeta)) - 10).attr('text-anchor', 'middle').attr('fill', '#f59e0b').text('MAP: ' + map.toFixed(2));
+    }
+    
+    document.getElementById('priorAlpha').addEventListener('input', e => { state.priorAlpha = parseInt(e.target.value); updateUI(); });
+    document.getElementById('priorBeta').addEventListener('input', e => { state.priorBeta = parseInt(e.target.value); updateUI(); });
+    updateUI();
+  </script>
+</body>
+</html>

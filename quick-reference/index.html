@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Reference - Conjugate Priors</title>
+  <style>
+    :root { --primary: #6366f1; --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --muted: #94a3b8; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2rem; background: linear-gradient(135deg, var(--primary), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: var(--muted); margin-top: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 16px; overflow: hidden; }
+    th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--bg); }
+    th { background: var(--primary); color: white; }
+    tr:hover { background: rgba(99, 102, 241, 0.1); }
+    .likelihood { color: #10b981; font-weight: 600; }
+    .prior { color: #ef4444; font-weight: 600; }
+    .posterior { color: #f59e0b; font-weight: 600; }
+    .formula { font-family: 'Courier New', monospace; font-size: 0.9rem; }
+    .card { background: var(--surface); border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0; }
+    .card h3 { margin-bottom: 1rem; color: var(--primary); }
+    .formula-box { background: var(--bg); padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace; margin: 0.5rem 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📋 Quick Reference: Conjugate Priors</h1>
+      <p class="subtitle">All you need to remember</p>
+    </header>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Likelihood</th>
+          <th>Prior</th>
+          <th>Posterior</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="likelihood">Bernoulli</td>
+          <td class="prior">Beta(α, β)</td>
+          <td class="posterior formula">Beta(α+k, β+n-k)</td>
+        </tr>
+        <tr>
+          <td class="likelihood">Binomial</td>
+          <td class="prior">Beta(α, β)</td>
+          <td class="posterior formula">Beta(α+k, β+n-k)</td>
+        </tr>
+        <tr>
+          <td class="likelihood">Poisson</td>
+          <td class="prior">Gamma(α, β)</td>
+          <td class="posterior formula">Gamma(α+Σy, β+n)</td>
+        </tr>
+        <tr>
+          <td class="likelihood">Exponential</td>
+          <td class="prior">Gamma(α, β)</td>
+          <td class="posterior formula">Gamma(α+n, β+Σtᵢ)</td>
+        </tr>
+        <tr>
+          <td class="likelihood">Normal (known σ²)</td>
+          <td class="prior">Normal(μ₀, σ₀²)</td>
+          <td class="posterior formula">Normal(μₙ, σₙ²)</td>
+        </tr>
+        <tr>
+          <td class="likelihood">Normal (unknown σ²)</td>
+          <td class="prior">Normal-Inverse-Gamma</td>
+          <td class="posterior formula">Normal-Inverse-Gamma</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card">
+      <h3>🔑 The Magic Formula</h3>
+      <div class="formula-box">
+        posterior parameters = prior pseudo-counts + observed counts
+      </div>
+      <p style="color: var(--muted); margin-top: 1rem;">
+        That's it! Just add your prior "fake" observations to your real data, and you get the posterior.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>📊 Parameter Interpretation</h3>
+      <div class="formula-box">
+        • Beta(α, β): mean = α/(α+β), strength = α+β<br>
+        • Gamma(α, β): mean = α/β, rate = β<br>
+        • Normal(μ, σ²): mean = μ, precision = 1/σ²
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚠️ When NOT to Use Conjugate Priors</h3>
+      <ul style="color: var(--muted); line-height: 1.8; padding-left: 1.5rem;">
+        <li>When you have strong domain knowledge that conflicts with conjugacy</li>
+        <li>For hierarchical models (use hyperpriors)</li>
+        <li>When likelihood is non-conjugate (most deep learning)</li>
+        <li>For robustness against outliers (use t distributions)</li>
+      </ul>
+      <p style="color: var(--muted); margin-top: 1rem;">
+        In these cases, use <strong>MCMC</strong> (Stan, PyMC3) or <strong>variational inference</strong>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
